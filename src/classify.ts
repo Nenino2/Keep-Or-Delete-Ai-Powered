@@ -12,8 +12,12 @@ async function run() {
     for (let i = 0; i < inputFiles.length; i++) {
             const inputFileName = inputFiles[i];
             const inputFilePath = path.join(process.cwd(), "inputs/all", inputFileName)
+            console.log(inputFilePath)
 
-            const prediction = predict(baseModel, model, inputFilePath)
+            const prediction = tf.tidy(() =>{
+                const prediction = predict(baseModel, model, inputFilePath)
+                return prediction;
+            })
             await moveFile(inputFilePath, path.join(`output/${prediction}/${inputFileName}`))
     }
 }

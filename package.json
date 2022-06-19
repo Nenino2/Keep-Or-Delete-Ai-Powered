@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "watch": "tsc -w",
-    "train": "node ./dist/train-model.js",
-    "classify": "node ./dist/classify.js"
+    "train": "node --max-old-space-size=8192 ./dist/train-model.js",
+    "classify": "node --max-old-space-size=8192 ./dist/classify.js"
   },
   "dependencies": {
     "@andreekeberg/imagedata": "^1.0.2",
