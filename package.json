@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "watch": "tsc -w",
-    "serve": "node ./dist/index.js"
+    "train": "node ./dist/train-model.js"
   },
   "dependencies": {
     "@andreekeberg/imagedata": "^1.0.2",
