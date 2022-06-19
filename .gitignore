@@ -2,3 +2,5 @@ node_modules
 train_assets
 .DS_Store
 dist
+inputs
+output

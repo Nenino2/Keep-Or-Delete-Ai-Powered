@@ -5,10 +5,12 @@
   "license": "MIT",
   "scripts": {
     "watch": "tsc -w",
-    "train": "node ./dist/train-model.js"
+    "train": "node ./dist/train-model.js",
+    "classify": "node ./dist/classify.js"
   },
   "dependencies": {
     "@andreekeberg/imagedata": "^1.0.2",
-    "@tensorflow/tfjs-node": "^3.18.0"
+    "@tensorflow/tfjs-node": "^3.18.0",
+    "move-file": "2"
   }
 }

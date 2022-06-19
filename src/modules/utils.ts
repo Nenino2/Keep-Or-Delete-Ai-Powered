@@ -60,10 +60,25 @@ export async function getAllTrainingFiles() {
     return {keptFiles, deletedFiles}
 }
 
+export async function getAllInputFiles() {
+    const inputFiles = (await fs.readdir(path.join(process.cwd(), "inputs/all"))).filter(el => !el.startsWith("."))
+
+    return {inputFiles}
+}
+
+export async function loadModel() {
+   return await tf.loadLayersModel('file://./kod_model/model.json')
+}
+
 export function predict(baseModel: tf.GraphModel, model: tf.LayersModel, filePath: string) {
     const inputImage = getFeatureFromFilePath(baseModel, filePath)
 
     const prediction = model.predict(inputImage.expandDims()) as tf.Tensor
 
-    console.log(prediction.arraySync())
+    const result = prediction.squeeze().argMax().arraySync() === 0 ? ImageKind.KEPT : ImageKind.DELETED;
+
+    inputImage.dispose();
+    prediction.dispose();
+
+    return result;
 }
