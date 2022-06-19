@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "watch": "tsc -w",
-    "serve": "nodemon --max-old-space-size=8192 ./dist/index.js"
+    "serve": "node ./dist/index.js"
   },
   "dependencies": {
     "@andreekeberg/imagedata": "^1.0.2",

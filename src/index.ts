@@ -1,27 +1,32 @@
 import * as tf from '@tensorflow/tfjs-node';
 import path from 'path';
 import fs from 'fs/promises'
-import * as imageData from '@andreekeberg/imagedata'
+import * as imageDataLibrary from '@andreekeberg/imagedata'
 
 enum ImageKind {
     KEPT = "kept",
     DELETED = "deleted"
 }
 
-function getImageTensorFromFilePath(fileUrl: string): Promise<tf.Tensor<tf.Rank.R3>> {
-    return new Promise((res, rej) => {
-        imageData.get(fileUrl, async (error, img) => {
-            if (error) rej(error)
-            const imageData = {data: new Uint8Array(img.data), width: img.width, height: img.height}
-            const imageTensor = await tf.browser.fromPixelsAsync(imageData) 
-            res(imageTensor);
-        })
-    })
+function getImageTensorFromFilePath(fileUrl: string): tf.Tensor<tf.Rank.R3> {
+    // return new Promise((res, rej) => {
+    //     imageData.get(fileUrl, async (error, img) => {
+    //         if (error) rej(error)
+    //         const imageData = {data: new Uint8Array(img.data), width: img.width, height: img.height}
+    //         const imageTensor = await tf.browser.fromPixelsAsync(imageData) 
+    //         res(imageTensor);
+    //     })
+    // })
+
+    const img = imageDataLibrary.getSync(fileUrl);
+    const imageData = {data: new Uint8Array(img.data), width: img.width, height: img.height}
+    const imageTensor = tf.browser.fromPixels(imageData) 
+    return imageTensor;
 }
 
 async function getAllFiles() {
-    const keptFiles = (await fs.readdir(path.join(process.cwd(), "assets", "kept"))).filter(el => !el.startsWith("."))
-    const deletedFiles = (await fs.readdir(path.join(process.cwd(), "assets", "deleted"))).filter(el => !el.startsWith("."))
+    const keptFiles = (await fs.readdir(path.join(process.cwd(), "train_assets", "kept"))).filter(el => !el.startsWith("."))
+    const deletedFiles = (await fs.readdir(path.join(process.cwd(), "train_assets", "deleted"))).filter(el => !el.startsWith("."))
 
     return {keptFiles, deletedFiles}
 }
@@ -30,8 +35,8 @@ async function loadBaseModel() {
     return await tf.loadGraphModel('https://tfhub.dev/google/tfjs-model/imagenet/mobilenet_v3_small_100_224/feature_vector/5/default/1', { fromTFHub: true })
 }
 
-async function getFeatureFromFilePath(baseModel:tf.GraphModel, fileName: string, imageKind: ImageKind) {
-    const keptImageTensorRaw = await getImageTensorFromFilePath(path.join("assets/"+imageKind,fileName))
+function getFeatureFromFilePath(baseModel:tf.GraphModel, fileName: string, imageKind: ImageKind) {
+    const keptImageTensorRaw = getImageTensorFromFilePath(path.join("train_assets/"+imageKind,fileName))
     const keptImageTensor = keptImageTensorRaw.resizeBilinear([224, 224], true).div(255).expandDims()
     const feature = baseModel.predict(keptImageTensor) as tf.Tensor
     const featureSqueezed = feature.squeeze();
@@ -48,13 +53,17 @@ function getDataGenerator(baseModel: tf.GraphModel, keptFiles: string[], deleted
         const numElements = 100;
         let index = 0;
         while (index < numElements) {
-            const feature = await getFeatureFromFilePath(baseModel, keptFiles[index], ImageKind.KEPT)
-            yield feature;
-        }
-        index = 0
-        while (index < numElements) {
-            const feature = await getFeatureFromFilePath(baseModel, deletedFiles[index], ImageKind.DELETED)
-            yield feature;
+            index++;
+            const kind = Math.floor(Math.random() * 2) === 0 ? ImageKind.KEPT : ImageKind.DELETED;
+            if (kind === ImageKind.KEPT) {
+                const feature = getFeatureFromFilePath(baseModel, keptFiles[index], ImageKind.KEPT)
+                yield {xs: feature.expandDims(), ys: tf.tensor1d([1, 0]).expandDims()};
+                feature.dispose()
+            } else {
+                const feature = getFeatureFromFilePath(baseModel, deletedFiles[index], ImageKind.DELETED)
+                yield {xs: feature.expandDims(), ys: tf.tensor1d([0, 1]).expandDims()};
+                feature.dispose()
+            }
         }
     }
 }
@@ -64,8 +73,7 @@ async function run() {
 
     const baseModel = await loadBaseModel()
 
-    const ds = tf.data.generator(dataGenerator(baseModel, keptFiles, deletedFiles));
-
+    const ds = tf.data.generator(getDataGenerator(baseModel, keptFiles, deletedFiles));
     /*
 
     const features = [];
@@ -88,7 +96,6 @@ async function run() {
 
     */
 
-    /*
     const model = tf.sequential()
     model.add(tf.layers.dense({inputShape: [1024], units: 100, activation: "relu"}))
     model.add(tf.layers.dense({units: 2, activation: "softmax"}))
@@ -99,24 +106,15 @@ async function run() {
         loss: "binaryCrossentropy"
     })
 
-    const results = await model.fit(
-		tf.stack(features), // input
-		tf.stack(outputs), // output
-		{
-            shuffle: true, // to make sure to randomize the input's order
-            batchSize: 1, // how many input to train before changing weights
-            epochs: 10 // how many times to run the training on all inputs
-        }
-    )
+    model.summary()
 
-    const newSampleImage = await getFeatureFromFilePath(baseModel, deletedFiles[Math.floor(Math.random() * deletedFiles.length - 1)], ImageKind.DELETED)
+    await model.fitDataset(ds, {
+        epochs: 10,
+        batchesPerEpoch: 5
+    });
 
-    const prediction = model.predict(newSampleImage.expandDims()) as tf.Tensor
-    
-    console.log(await prediction.array())
-*/
-
+    model.save('file://./kod_model')
+  
 
 }
-
 run()
