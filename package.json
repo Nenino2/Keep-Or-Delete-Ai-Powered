@@ -1,0 +1,14 @@
+{
+  "name": "keep-or-delete-ai",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "watch": "tsc -w",
+    "serve": "nodemon --max-old-space-size=8192 ./dist/index.js"
+  },
+  "dependencies": {
+    "@andreekeberg/imagedata": "^1.0.2",
+    "@tensorflow/tfjs-node": "^3.18.0"
+  }
+}
