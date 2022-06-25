@@ -100,12 +100,11 @@ export async function runAi() {
                 await writableStream.write(file);
                 await writableStream.close();
             }
-
-            alert("Completed")
-
-            uploadButton.classList.toggle("invisible");
-            currentImage.classList.toggle("invisible")
         }
+        alert("Completed")
+
+        uploadButton.classList.toggle("invisible");
+        currentImage.classList.toggle("invisible")
     } catch(error) {
         console.error(error)
     }

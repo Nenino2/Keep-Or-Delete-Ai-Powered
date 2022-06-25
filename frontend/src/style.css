@@ -30,7 +30,7 @@ html, body, div {
 }
 
 .app__current-image {
-    width: 30vw;
+    height: 50vh;
 }
 
 .invisible {
