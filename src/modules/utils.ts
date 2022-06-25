@@ -34,7 +34,7 @@ export function getFeatureFromFilePath(baseModel:tf.GraphModel, filePath: string
 
 export function getDataGenerator(baseModel: tf.GraphModel, keptFiles: string[], deletedFiles: string[]) {
     return function* dataGenerator() {
-        const numElements = 100;
+        const numElements = 700;
         let index = 0;
         while (index < numElements) {
             index++;
