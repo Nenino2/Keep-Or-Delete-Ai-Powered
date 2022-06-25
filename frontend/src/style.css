@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Titan+One&display=swap');
+
+html, body, div {
+    margin: 0;
+    padding: 0;
+}
+
+.app {
+    width: 100%;
+    height: calc(var(--vh, 1vh) * 100);
+    background-image: radial-gradient(#1B264F, #0F182F);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    display: grid;
+    place-content: center;
+    place-items: center;
+    color: whitesmoke;
+    row-gap: 5em;
+}
+
+.app__title {
+    text-transform: uppercase;
+    font-family: 'Titan One', cursive;
+    font-size: 3em;
+}
+
+.app__upload-button {
+    width: 8em;
+}
