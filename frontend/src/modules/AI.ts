@@ -61,7 +61,11 @@ export async function predict(baseModel: tf.GraphModel, model: tf.LayersModel, f
 
 export async function runAi() {
     try {
-        const dirHandle = await (window as any).showDirectoryPicker();
+        const rootDirHandle = await (window as any).showDirectoryPicker();
+
+        const keptDirHandle = await rootDirHandle.getDirectoryHandle('kept', { create: true, });
+        const deletedDirHandle = await rootDirHandle.getDirectoryHandle('deleted', { create: true, });
+        const ignoredDirHandle = await rootDirHandle.getDirectoryHandle('ignored', { create: true, });
 
         uploadButton.classList.toggle("invisible");
         currentImage.classList.toggle("invisible")
@@ -69,13 +73,40 @@ export async function runAi() {
         const baseModel = await loadBaseModel()
         const model = await loadModel();
 
-        for await (const entry of dirHandle.values()) {
-            const file: File = await entry.getFile();
+        for await (const entry of rootDirHandle.values()) {
+            if (entry.kind !== 'file') {
+                continue;
+            }
+            const file = await entry.getFile();
+
+            if (file.type !== "image/jpeg") {
+                const newFileHandle = await ignoredDirHandle.getFileHandle(entry.name, {create: true})
+                const writableStream = await newFileHandle.createWritable();
+                await writableStream.write(file);
+                await writableStream.close();
+                continue;
+            }
+
             const result = await predict(baseModel, model, file)
-            console.log(result);
-            break;
+
+            if (result === ImageKind.KEPT) {
+                const newFileHandle = await keptDirHandle.getFileHandle(entry.name, {create: true})
+                const writableStream = await newFileHandle.createWritable();
+                await writableStream.write(file);
+                await writableStream.close();
+            } else if (result === ImageKind.DELETED) {
+                const newFileHandle = await deletedDirHandle.getFileHandle(entry.name, {create: true})
+                const writableStream = await newFileHandle.createWritable();
+                await writableStream.write(file);
+                await writableStream.close();
+            }
+
+            alert("Completed")
+
+            uploadButton.classList.toggle("invisible");
+            currentImage.classList.toggle("invisible")
         }
     } catch(error) {
-        console.warn("Aborted")
+        console.error(error)
     }
 }
