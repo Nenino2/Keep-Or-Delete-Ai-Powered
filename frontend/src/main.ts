@@ -1,3 +1,5 @@
+import { runAi } from './modules/AI';
+import { uploadButton } from './modules/Dom';
 import './style.css'
 
-document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+uploadButton.addEventListener("click", runAi)
